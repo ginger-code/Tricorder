@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net6.0</TargetFramework>
+        <AssemblyName>Tricorder.CodeGen</AssemblyName>
+        <RootNamespace>Tricorder.CodeGen</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Program.fs" />
+        <Content Include="schema\*.xsd">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="FSharp.Data" Version="4.2.4" />
+    </ItemGroup>
+
+</Project>

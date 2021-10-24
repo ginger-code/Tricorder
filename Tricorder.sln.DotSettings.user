@@ -1,0 +1,16 @@
+﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=c849def1_002Ddfa2_002D4dc9_002Dbd97_002Dadad13238aef/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="HL7PathsParse" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;&#xD;
+  &lt;TestAncestor&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::72986E29-FA8A-4292-8685-6E6E6E171380::net6.0::Tricorder.Tests.HL7PathTests.HL7PathsParse&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::72986E29-FA8A-4292-8685-6E6E6E171380::net6.0::Tricorder.Tests.QueryTests.QueriesPD1_11_1&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::72986E29-FA8A-4292-8685-6E6E6E171380::net6.0::Tricorder.Tests.QueryTests.QueriesPID_5_1&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::72986E29-FA8A-4292-8685-6E6E6E171380::net6.0::Tricorder.Tests.QueryTests.CollectsPID_5_1&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::72986E29-FA8A-4292-8685-6E6E6E171380::net6.0::Tricorder.Tests.QueryTests&lt;/TestId&gt;&#xD;
+  &lt;/TestAncestor&gt;&#xD;
+&lt;/SessionState&gt;</s:String>
+	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=3b159868_002Ddd8a_002D48d8_002Dbf53_002De17cbd93335e_0023Tricorder_002ECodeGen/@EntryIndexedValue">True</s:Boolean>
+	
+	
+	
+	
+	</wpf:ResourceDictionary>

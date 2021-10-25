@@ -7,16 +7,16 @@ public static class HL7
 
     public static async Task<IEnumerable<string>> CollectValues(HL7Path hl7Path, string hl7FileDirectory, ControlCharacters? controlCharacters = null) 
         => (
-            await Task.WhenAll(
-                Directory.EnumerateFiles(hl7FileDirectory, "*.hl7")
-                    .Select(async path
-                        => await File.ReadAllTextAsync(path))
-                    .Select(async message
-                        => await Task.Run(async () => QueryMessage(hl7Path, await message, controlCharacters))
-                    )
+                await Task.WhenAll(
+                    Directory.EnumerateFiles(hl7FileDirectory, "*.hl7")
+                        .Select(async path
+                            => await File.ReadAllTextAsync(path))
+                        .Select(async message
+                            => await Task.Run(async () => QueryMessage(hl7Path, await message, controlCharacters))
+                        )
+                )
             )
-        )
-        .SelectMany(x => x);
+            .SelectMany(x => x);
 
     public static async Task<IEnumerable<string>> CollectValues(string hl7Path, IEnumerable<string> hl7Messages, ControlCharacters? controlCharacters = null)
         => await CollectValues(new HL7Path(hl7Path), hl7Messages, controlCharacters);

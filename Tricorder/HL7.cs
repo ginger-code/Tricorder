@@ -1,65 +1,114 @@
-﻿namespace Tricorder;
+﻿using System.Collections.Concurrent;
+using System.Threading.Channels;
+using HL7lite;
+using Open.ChannelExtensions;
+
+namespace Tricorder;
 
 public static class HL7
 {
-    public static async Task<IEnumerable<string>> CollectValues(string hl7Path, string hl7FileDirectory, ControlCharacters? controlCharacters = null) 
-        => await CollectValues(new HL7Path(hl7Path), hl7FileDirectory, controlCharacters);
-
-    public static async Task<IEnumerable<string>> CollectValues(HL7Path hl7Path, string hl7FileDirectory, ControlCharacters? controlCharacters = null) 
-        => (
-                await Task.WhenAll(
-                    Directory.EnumerateFiles(hl7FileDirectory, "*.hl7")
-                        .Select(async path
-                            => await File.ReadAllTextAsync(path))
-                        .Select(async message
-                            => await Task.Run(async () => QueryMessage(hl7Path, await message, controlCharacters))
-                        )
-                )
-            )
-            .SelectMany(x => x);
-
-    public static async Task<IEnumerable<string>> CollectValues(string hl7Path, IEnumerable<string> hl7Messages, ControlCharacters? controlCharacters = null)
-        => await CollectValues(new HL7Path(hl7Path), hl7Messages, controlCharacters);
-
-    public static async Task<IEnumerable<string>> CollectValues(HL7Path hl7Path, IEnumerable<string> hl7Messages, ControlCharacters? controlCharacters = null)
-        => (await Task.WhenAll(hl7Messages.Select(message => Task.Run(() => QueryMessage(hl7Path, message, controlCharacters)))))
-            .SelectMany(x => x);
-
-    public static IEnumerable<string> QueryMessage(string path, string hl7Message, ControlCharacters? controlCharacters = null) 
-        => QueryMessage(new HL7Path(path), hl7Message, controlCharacters);
-
-    public static IEnumerable<string> QueryMessage(HL7Path path, string hl7Message, ControlCharacters? controlCharacters = null)
+    public static async Task<IDictionary<string, int>> CollectValues(string searchPattern, string searchPath, CancellationToken cancellationToken = default)
     {
-        if (controlCharacters is null)
+        var maxConcurrency = Environment.ProcessorCount;
+        HL7Path pattern = searchPattern;
+        ConcurrentDictionary<string, int> dict = new();
+        await Channel.CreateUnbounded<string>()
+            .Source(Directory.EnumerateFiles(searchPath, "*.hl7"), cancellationToken)
+            .PipeAsync(maxConcurrency, PathToMessageTransform, cancellationToken: cancellationToken)
+            .Pipe(maxConcurrency, CollectValueTransform, cancellationToken: cancellationToken)
+            .ReadAllConcurrently(maxConcurrency, newDict =>
+            {
+                foreach (var key in newDict.Keys)
+                {
+                    if (dict.ContainsKey(key))
+                    {
+                        dict[key] += newDict[key];
+                    }
+                    else
+                    {
+                        dict[key] = newDict[key];
+                    }
+                }
+            }, cancellationToken);
+        return dict;
+
+        async ValueTask<Message> PathToMessageTransform(string path)
         {
-            var trimmedMessage = hl7Message.Trim();
-            controlCharacters = trimmedMessage.StartsWith("MSH")
-                ? new ControlCharacters(trimmedMessage[3], trimmedMessage[4], trimmedMessage[5], trimmedMessage[6], trimmedMessage[7])
-                : new ControlCharacters();
+            Message message = new(await File.ReadAllTextAsync(path, cancellationToken));
+            message.ParseMessage(false);
+            return message;
         }
 
-        var controls = (ControlCharacters)controlCharacters;
-
-        foreach (var segment in hl7Message.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        Dictionary<string, int> CollectValueTransform(Message message)
         {
-            if (string.IsNullOrEmpty(segment) || !segment.StartsWith(path.MessageType))
-                continue;
-            if (path.FieldIndex is null)
-                yield return segment;
-            var fields = segment.Split(controls.FieldSeparator);
-            if (path.FieldIndex < fields.Length)
+            var newDict = new Dictionary<string, int>();
+
+            if (pattern.FieldIndex is null)
             {
-                if (path.ComponentIndex is null)
+                foreach (var segment in message.Segments(pattern.MessageType))
                 {
-                    yield return fields[path.FieldIndex!.Value];
+                    if (newDict.ContainsKey(segment.Value))
+                    {
+                        newDict[segment.Value]++;
+                    }
+                    else
+                    {
+                        newDict[segment.Value] = 1;
+                    }
                 }
 
-                var components = fields[path.FieldIndex!.Value].Split(controls.ComponentSeparator);
-                if (path.ComponentIndex - 1 < components.Length)
+                return newDict;
+            }
+
+            if (pattern.ComponentIndex is null)
+            {
+                foreach (var segment in message.Segments(pattern.MessageType))
                 {
-                    yield return components[path.ComponentIndex!.Value - 1];
+                    var field = segment.Fields(pattern.FieldIndex.Value);
+                    if (field is null)
+                    {
+                        continue;
+                    }
+
+                    if (newDict.ContainsKey(field.Value))
+                    {
+                        newDict[field.Value]++;
+                    }
+                    else
+                    {
+                        newDict[field.Value] = 1;
+                    }
+                }
+
+                return newDict;
+            }
+
+            foreach (var segment in message.Segments(pattern.MessageType))
+            {
+                var field = segment.Fields(pattern.FieldIndex.Value);
+                if (field is null)
+                {
+                    continue;
+                }
+
+                var component = field.Components(pattern.ComponentIndex.Value);
+
+                if (component is null)
+                {
+                    continue;
+                }
+
+                if (newDict.ContainsKey(component.Value))
+                {
+                    newDict[component.Value]++;
+                }
+                else
+                {
+                    newDict[component.Value] = 1;
                 }
             }
+
+            return newDict;
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -21,27 +21,30 @@ public class QueryDirectoryCommand : AsyncCommand<QueryDirectoryCommand.Settings
 
     public override async Task<int> ExecuteAsync(CommandContext context, Settings settings)
     {
-        var values = new List<string>();
+        var stopwatch = Stopwatch.StartNew();
+        IDictionary<string, int> values = new Dictionary<string, int>();
         await AnsiConsole.Status()
             .Spinner(Spinner.Known.Star)
             .StartAsync("Scanning...", async ctx => {
-                values =  (await HL7.CollectValues(settings.SearchPattern, settings.SearchPath)).ToList();
+                values =  await HL7.CollectValues(settings.SearchPattern, settings.SearchPath);
             });
         if (values.Count == 0)
         {
             AnsiConsole.Markup("[red]Sorry, no results were found for that query.[/]");
             return 0;
         }
-        var countDictionary = values.GroupBy(val => val).ToDictionary(grouping => grouping.Key, grouping => grouping.Count());
         AnsiConsole.MarkupLine("[green]Results:[/]");
         var table = new Table();
         table.AddColumn(new TableColumn("[green]Value[/]").Centered());
         table.AddColumn(new TableColumn("[blue]Count[/]").Centered());
-        foreach (var key in countDictionary.Keys)
+        foreach (var key in values.Keys)
         {
-            table.AddRow(key, $"{countDictionary[key]}");
+            table.AddRow(key, $"{values[key]}");
         }
         AnsiConsole.Write(table);
+        stopwatch.Stop();
+        AnsiConsole.WriteLine();
+        AnsiConsole.MarkupLine($"[violet]Execution time: {stopwatch.Elapsed:g}[/]");
         return 0;
     }
 

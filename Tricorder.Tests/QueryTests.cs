@@ -7,34 +7,13 @@ namespace Tricorder.Tests;
 public class QueryTests
 {
     [Test]
-    public void Queries_PID_5_1()
-    {
-        HL7Path path = "PID.5.1";
-        var results = HL7.QueryMessage(path, ORU).ToList();
-        Assert.NotNull(results);
-        Assert.IsNotEmpty(results);
-        Assert.AreEqual(1, results.Count);
-        Assert.AreEqual("AAAAAAAA", results.First());
-    }
-
-    [Test]
-    public async Task Collects_PID_5_1()
-    {
-        var results = (await HL7.CollectValues("PID.5.1", new[] { ORU, ORU })).ToList();
-        Assert.NotNull(results);
-        Assert.IsNotEmpty(results);
-        Assert.AreEqual(2, results.Count);
-        Assert.AreEqual("AAAAAAAA", results.First());
-    }
-    
-    [Test]
     public async Task Collects_PID_5_1_From_Disk()
     {
-        var results = (await HL7.CollectValues("PID.5.1", "test_files")).ToList();
+        var results = (await HL7.CollectValues("PID.5.1", "test_files"));
         Assert.NotNull(results);
         Assert.IsNotEmpty(results);
         Assert.AreEqual(1, results.Count);
-        Assert.AreEqual("AAAAAAAA", results.First());
+        Assert.AreEqual("AAAAAAAA", results.Keys.First());
     }
 
     private const string ORU = @"MSH|^~\&|LinkLogic-2149|2149001^BMGPED|CHIRPS-Out|BMGPED|20060915210000||ORU^R01 |1473973200100600|P|2.3|||NE|NE

@@ -1,4 +1,5 @@
-﻿using Spectre.Console.Cli;
+﻿using Spectre.Console;
+using Spectre.Console.Cli;
 using Tricorder.CLI;
 
 var app = new CommandApp();
@@ -11,5 +12,13 @@ app.Configure(config =>
         .WithExample(new[] { "scan", "PV1.1.2" })
         .WithExample(new[] { "scan", "\"PID.4\"", "\"C:\\\\Data\\\\Incoming\"" });
 });
-
-return app.Run(args);
+try
+{
+    return await app.RunAsync(args);
+}
+catch(Exception exception)
+{
+    AnsiConsole.MarkupLine("[red]***Exception Encountered***[/]");
+    AnsiConsole.WriteException(exception);
+    return 1;
+}
